@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "hookrelay"
+version = "0.1.0"
+description = "tiny self-hosted webhook relay with filtering and templating"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+authors = [{ name = "Unterwegs" }]
+keywords = ["webhook", "relay", "slack", "discord", "ntfy"]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Internet :: WWW/HTTP",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[project.scripts]
+hookrelay = "hookrelay.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/UnterwegsDev/hookrelay"
+Issues = "https://github.com/UnterwegsDev/hookrelay/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/hookrelay"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
