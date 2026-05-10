@@ -1,0 +1,36 @@
+{
+  "host": "127.0.0.1",
+  "port": 8080,
+  "routes": [
+    {
+      "name": "github-push",
+      "match": {
+        "path": "/hooks/github",
+        "headers": { "X-GitHub-Event": "push" },
+        "body_equals": { "ref": "refs/heads/main" }
+      },
+      "signature": {
+        "secret": "change-me",
+        "header": "X-Hub-Signature-256",
+        "algorithm": "sha256",
+        "prefix": "sha256="
+      },
+      "template": "{{ pusher.name }} pushed to {{ repository.full_name }}",
+      "sinks": [
+        { "type": "slack", "url": "https://hooks.slack.com/services/XXX/YYY/ZZZ" }
+      ]
+    },
+    {
+      "name": "alerts",
+      "match": { "path": "/hooks/alerts" },
+      "template": "[{{ status }}] {{ title }}",
+      "sinks": [
+        {
+          "type": "generic",
+          "url": "https://example.com/ingest",
+          "options": { "content_type": "text/plain" }
+        }
+      ]
+    }
+  ]
+}
