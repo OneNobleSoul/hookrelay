@@ -4,7 +4,7 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
-VALID_SINKS = {"slack", "generic"}
+VALID_SINKS = {"slack", "discord", "ntfy", "generic"}
 
 
 class ConfigError(Exception):
@@ -47,6 +47,8 @@ class Config:
     routes: list[Route]
     host: str = "127.0.0.1"
     port: int = 8080
+    retries: int = 3
+    backoff: float = 0.5
 
 
 def _parse_match(data: object, route_name: str) -> Match:
@@ -123,6 +125,8 @@ def parse_config(data: object) -> Config:
         routes=routes,
         host=str(data.get("host", "127.0.0.1")),
         port=int(data.get("port", 8080)),
+        retries=int(data.get("retries", 3)),
+        backoff=float(data.get("backoff", 0.5)),
     )
 
 
