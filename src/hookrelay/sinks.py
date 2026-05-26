@@ -5,6 +5,8 @@ from dataclasses import dataclass, field
 
 from .config import Sink
 
+DISCORD_LIMIT = 2000
+
 
 @dataclass
 class OutboundRequest:
@@ -14,9 +16,35 @@ class OutboundRequest:
     body: bytes = b""
 
 
+def truncate(text: str, limit: int = DISCORD_LIMIT, marker: str = "...") -> str:
+    if len(text) <= limit:
+        return text
+    return text[:limit] + marker
+
+
 def build_slack(url: str, text: str, options: dict | None = None) -> OutboundRequest:
     body = json.dumps({"text": text}).encode("utf-8")
     return OutboundRequest("POST", url, {"Content-Type": "application/json"}, body)
+
+
+def build_discord(url: str, text: str, options: dict | None = None) -> OutboundRequest:
+    body = json.dumps({"content": truncate(text)}).encode("utf-8")
+    return OutboundRequest("POST", url, {"Content-Type": "application/json"}, body)
+
+
+def build_ntfy(url: str, text: str, options: dict | None = None) -> OutboundRequest:
+    options = options or {}
+    headers = {"Content-Type": "text/plain; charset=utf-8"}
+    if options.get("title"):
+        headers["Title"] = str(options["title"])
+    if options.get("priority") is not None:
+        headers["Priority"] = str(options["priority"])
+    tags = options.get("tags")
+    if tags:
+        if isinstance(tags, (list, tuple)):
+            tags = ",".join(str(t) for t in tags)
+        headers["Tags"] = str(tags)
+    return OutboundRequest("POST", url, headers, text.encode("utf-8"))
 
 
 def build_generic(url: str, text: str, options: dict | None = None) -> OutboundRequest:
@@ -29,6 +57,8 @@ def build_generic(url: str, text: str, options: dict | None = None) -> OutboundR
 
 _BUILDERS = {
     "slack": build_slack,
+    "discord": build_discord,
+    "ntfy": build_ntfy,
     "generic": build_generic,
 }
 
