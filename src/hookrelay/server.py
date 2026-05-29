@@ -44,7 +44,7 @@ def handle_webhook(
     delivered = 0
     for sink in route.sinks:
         req = build_request(sink, text)
-        result = deliver(req)
+        result = deliver(req, retries=config.retries, backoff=config.backoff)
         if result.ok:
             delivered += 1
         else:

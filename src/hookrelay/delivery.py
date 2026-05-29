@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 import urllib.request
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -26,11 +27,25 @@ def http_send(req: OutboundRequest, timeout: float = 10.0) -> int:
 def deliver(
     req: OutboundRequest,
     sender: Callable[[OutboundRequest], int | None] = http_send,
+    retries: int = 3,
+    backoff: float = 0.5,
+    sleeper: Callable[[float], None] = time.sleep,
 ) -> DeliveryResult:
-    try:
-        status = sender(req)
-        if status is not None and 200 <= status < 300:
-            return DeliveryResult(True, 1, status=status)
-        return DeliveryResult(False, 1, error=f"status {status}")
-    except Exception as e:  # noqa: BLE001
-        return DeliveryResult(False, 1, error=str(e))
+    """Try to deliver, retrying with exponential backoff.
+
+    `sender` and `sleeper` are injectable so tests don't hit the network or wait.
+    """
+    attempt = 0
+    last_err: str | None = None
+    while attempt < retries:
+        attempt += 1
+        try:
+            status = sender(req)
+            if status is not None and 200 <= status < 300:
+                return DeliveryResult(True, attempt, status=status)
+            last_err = f"status {status}"
+        except Exception as e:  # noqa: BLE001
+            last_err = str(e)
+        if attempt < retries:
+            sleeper(backoff * (2 ** (attempt - 1)))
+    return DeliveryResult(False, attempt, error=last_err)
