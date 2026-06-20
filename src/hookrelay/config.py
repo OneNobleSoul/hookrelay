@@ -49,6 +49,7 @@ class Config:
     port: int = 8080
     retries: int = 3
     backoff: float = 0.5
+    default_placeholder: str = ""
 
 
 def _parse_match(data: object, route_name: str) -> Match:
@@ -121,12 +122,17 @@ def parse_config(data: object) -> Config:
     if not isinstance(routes_data, list) or not routes_data:
         raise ConfigError("config needs a non-empty 'routes' list")
     routes = [_parse_route(r) for r in routes_data]
+    names = [r.name for r in routes]
+    dupes = {n for n in names if names.count(n) > 1}
+    if dupes:
+        raise ConfigError(f"duplicate route names: {', '.join(sorted(dupes))}")
     return Config(
         routes=routes,
         host=str(data.get("host", "127.0.0.1")),
         port=int(data.get("port", 8080)),
         retries=int(data.get("retries", 3)),
         backoff=float(data.get("backoff", 0.5)),
+        default_placeholder=str(data.get("default_placeholder", "")),
     )
 
 

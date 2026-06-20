@@ -39,7 +39,9 @@ def handle_webhook(
         "_path": path,
         "_body": body_bytes.decode("utf-8", "replace"),
     }
-    text = render(route.template, body_dict, builtins=builtins)
+    text = render(
+        route.template, body_dict, builtins=builtins, default=config.default_placeholder
+    )
 
     delivered = 0
     for sink in route.sinks:

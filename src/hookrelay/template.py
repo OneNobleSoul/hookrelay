@@ -45,11 +45,12 @@ def render(
     template: str,
     payload: object,
     builtins: dict | None = None,
+    default: str = "",
 ) -> str:
     """Expand {{ dotted.path }} placeholders from payload.
 
     Keys starting with '_' are looked up in builtins (e.g. _route, _body).
-    Missing keys render as an empty string.
+    Missing keys render as `default`.
     """
     ctx = builtins or {}
 
@@ -60,7 +61,7 @@ def render(
         else:
             val = get_path(payload, key, default=_MISSING)
         if val is _MISSING:
-            return ""
+            return default
         return _stringify(val)
 
     return _PLACEHOLDER.sub(repl, template)

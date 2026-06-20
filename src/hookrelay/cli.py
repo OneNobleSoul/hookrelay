@@ -56,7 +56,9 @@ def _deliver_once(config, route: Route, raw: str) -> int:
         return 1
     body_dict = payload if isinstance(payload, dict) else {}
     builtins = {"_route": route.name, "_path": route.match.path or "", "_body": raw}
-    text = render(route.template, body_dict, builtins=builtins)
+    text = render(
+        route.template, body_dict, builtins=builtins, default=config.default_placeholder
+    )
     print(f"rendered: {text}")
     failures = 0
     for sink in route.sinks:
