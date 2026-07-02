@@ -19,7 +19,9 @@ class OutboundRequest:
 def truncate(text: str, limit: int = DISCORD_LIMIT, marker: str = "...") -> str:
     if len(text) <= limit:
         return text
-    return text[:limit] + marker
+    if limit <= len(marker):
+        return marker[:limit]
+    return text[: limit - len(marker)] + marker
 
 
 def build_slack(url: str, text: str, options: dict | None = None) -> OutboundRequest:
