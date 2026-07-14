@@ -77,6 +77,20 @@ def test_signature_requires_secret():
         parse_config(bad)
 
 
+def test_signature_rejects_unsupported_algorithm():
+    bad = {
+        "routes": [
+            {
+                "name": "r",
+                "signature": {"secret": "shh", "algorithm": "sha265"},
+                "sinks": [{"type": "slack", "url": "http://s"}],
+            }
+        ]
+    }
+    with pytest.raises(ConfigError):
+        parse_config(bad)
+
+
 def test_signature_parsed():
     data = {
         "routes": [
