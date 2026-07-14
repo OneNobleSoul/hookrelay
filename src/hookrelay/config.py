@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -73,10 +74,15 @@ def _parse_signature(data: object, route_name: str) -> Signature | None:
         raise ConfigError(f"route {route_name!r}: signature must be an object")
     if not data.get("secret"):
         raise ConfigError(f"route {route_name!r}: signature.secret is required")
+    algorithm = str(data.get("algorithm", "sha256"))
+    if algorithm not in hashlib.algorithms_available:
+        raise ConfigError(
+            f"route {route_name!r}: unsupported signature.algorithm {algorithm!r}"
+        )
     return Signature(
         secret=str(data["secret"]),
         header=str(data.get("header", "X-Hub-Signature-256")),
-        algorithm=str(data.get("algorithm", "sha256")),
+        algorithm=algorithm,
         prefix=str(data.get("prefix", "")),
     )
 
