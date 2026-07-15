@@ -45,3 +45,13 @@ def test_verify_empty_provided():
 def test_unsupported_algorithm():
     with pytest.raises(ValueError):
         compute("secret", b"x", algorithm="rot13")
+
+
+def test_compute_algorithm_without_hashlib_attribute():
+    # ripemd160 is in hashlib.algorithms_available on most builds but has no
+    # hashlib.ripemd160 attribute, so getattr(hashlib, ...) would wrongly
+    # reject it even though it's a valid, config-approved algorithm.
+    if "ripemd160" not in hashlib.algorithms_available:
+        pytest.skip("ripemd160 not available on this build")
+    expected = hmac.new(b"secret", b"x", "ripemd160").hexdigest()
+    assert compute("secret", b"x", algorithm="ripemd160") == expected

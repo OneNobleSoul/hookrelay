@@ -5,10 +5,12 @@ import hmac
 
 
 def compute(secret: str, body: bytes, algorithm: str = "sha256") -> str:
-    algo = getattr(hashlib, algorithm, None)
-    if algo is None or algorithm not in hashlib.algorithms_available:
+    if algorithm not in hashlib.algorithms_available:
         raise ValueError(f"unsupported algorithm: {algorithm}")
-    return hmac.new(secret.encode("utf-8"), body, algo).hexdigest()
+    # pass the name straight to hmac/hashlib.new instead of getattr(hashlib, ...):
+    # some entries in algorithms_available (ripemd160, sm3, sha512_224, md5-sha1)
+    # have no matching hashlib module attribute and would falsely raise here.
+    return hmac.new(secret.encode("utf-8"), body, algorithm).hexdigest()
 
 
 def verify(
