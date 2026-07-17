@@ -25,7 +25,11 @@ def _read_data(spec: str | None) -> str:
 
 
 def cmd_run(args: argparse.Namespace) -> int:
-    config = load_config(args.config)
+    try:
+        config = load_config(args.config)
+    except ConfigError as e:
+        print(f"config error: {e}", file=sys.stderr)
+        return 1
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
     )
