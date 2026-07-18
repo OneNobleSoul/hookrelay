@@ -30,6 +30,7 @@ one or more sinks.
   "port": 8080,
   "retries": 3,
   "backoff": 0.5,
+  "max_body_bytes": 1048576,
   "routes": [
     {
       "name": "github-push",
@@ -114,6 +115,8 @@ missing signature returns 401.
 - No built-in auth on the admin/health surface (there isn't one; it only speaks
   webhooks).
 - One process, threaded. Fine for personal use, not meant to be a queue.
+- Inbound request bodies are capped at `max_body_bytes` (default 1 MiB, based on
+  `Content-Length`); oversized requests get a 413 before the body is read.
 
 ## License
 
