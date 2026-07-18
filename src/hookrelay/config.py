@@ -51,6 +51,7 @@ class Config:
     retries: int = 3
     backoff: float = 0.5
     default_placeholder: str = ""
+    max_body_bytes: int = 1_048_576
 
 
 def _parse_match(data: object, route_name: str) -> Match:
@@ -132,6 +133,9 @@ def parse_config(data: object) -> Config:
     dupes = {n for n in names if names.count(n) > 1}
     if dupes:
         raise ConfigError(f"duplicate route names: {', '.join(sorted(dupes))}")
+    max_body_bytes = int(data.get("max_body_bytes", 1_048_576))
+    if max_body_bytes <= 0:
+        raise ConfigError("max_body_bytes must be a positive integer")
     return Config(
         routes=routes,
         host=str(data.get("host", "127.0.0.1")),
@@ -139,6 +143,7 @@ def parse_config(data: object) -> Config:
         retries=int(data.get("retries", 3)),
         backoff=float(data.get("backoff", 0.5)),
         default_placeholder=str(data.get("default_placeholder", "")),
+        max_body_bytes=max_body_bytes,
     )
 
 

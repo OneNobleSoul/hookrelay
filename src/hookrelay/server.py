@@ -65,6 +65,13 @@ def make_handler(config: Config):
 
         def do_POST(self):  # noqa: N802
             length = int(self.headers.get("Content-Length") or 0)
+            if length > config.max_body_bytes:
+                # don't buffer an oversized body into memory; the socket still
+                # holds unread bytes, so close rather than risk a desync with
+                # whatever the next request would be on a kept-alive connection.
+                self.close_connection = True
+                self._respond(413, "payload too large")
+                return
             body = self.rfile.read(length) if length else b""
             status, msg = handle_webhook(config, self.path, dict(self.headers), body)
             self._respond(status, msg)

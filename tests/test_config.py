@@ -31,6 +31,21 @@ def test_parse_overrides():
     assert cfg.retries == 5
 
 
+def test_max_body_bytes_default():
+    cfg = parse_config(BASE)
+    assert cfg.max_body_bytes == 1_048_576
+
+
+def test_max_body_bytes_override():
+    cfg = parse_config({**BASE, "max_body_bytes": 4096})
+    assert cfg.max_body_bytes == 4096
+
+
+def test_max_body_bytes_must_be_positive():
+    with pytest.raises(ConfigError):
+        parse_config({**BASE, "max_body_bytes": 0})
+
+
 def test_missing_routes():
     with pytest.raises(ConfigError):
         parse_config({})
