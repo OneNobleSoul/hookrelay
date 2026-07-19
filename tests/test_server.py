@@ -1,5 +1,6 @@
 import http.client
 import json
+import socket
 import threading
 from http.server import ThreadingHTTPServer
 
@@ -68,6 +69,38 @@ def test_oversized_body_rejected_with_413():
         assert resp.status == 413
         resp.read()
         conn.close()
+    finally:
+        _stop_server(httpd, thread)
+
+
+def test_malformed_content_length_rejected_with_400():
+    cfg = _config(
+        {"name": "r", "match": {"path": "/a"}, "sinks": [{"type": "generic", "url": "http://x"}]}
+    )
+    httpd, thread = _run_server(cfg)
+    try:
+        s = socket.create_connection(httpd.server_address, timeout=5)
+        s.sendall(b"POST /a HTTP/1.1\r\nHost: x\r\nContent-Length: notanumber\r\n\r\n{}")
+        s.settimeout(5)
+        data = s.recv(4096)
+        assert b"400" in data.split(b"\r\n", 1)[0]
+        s.close()
+    finally:
+        _stop_server(httpd, thread)
+
+
+def test_negative_content_length_rejected_with_400():
+    cfg = _config(
+        {"name": "r", "match": {"path": "/a"}, "sinks": [{"type": "generic", "url": "http://x"}]}
+    )
+    httpd, thread = _run_server(cfg)
+    try:
+        s = socket.create_connection(httpd.server_address, timeout=5)
+        s.sendall(b"POST /a HTTP/1.1\r\nHost: x\r\nContent-Length: -1\r\n\r\n{}")
+        s.settimeout(5)
+        data = s.recv(4096)
+        assert b"400" in data.split(b"\r\n", 1)[0]
+        s.close()
     finally:
         _stop_server(httpd, thread)
 

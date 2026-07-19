@@ -64,7 +64,18 @@ def make_handler(config: Config):
         server_version = "hookrelay"
 
         def do_POST(self):  # noqa: N802
-            length = int(self.headers.get("Content-Length") or 0)
+            raw_length = self.headers.get("Content-Length")
+            try:
+                length = int(raw_length) if raw_length is not None else 0
+            except ValueError:
+                length = -1
+            if length < 0:
+                # malformed or negative Content-Length: bail out before rfile.read(),
+                # which would otherwise block reading an unbounded/negative size and
+                # tie up a worker thread indefinitely.
+                self.close_connection = True
+                self._respond(400, "invalid content-length")
+                return
             if length > config.max_body_bytes:
                 # don't buffer an oversized body into memory; the socket still
                 # holds unread bytes, so close rather than risk a desync with
